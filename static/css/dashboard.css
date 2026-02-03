@@ -1,0 +1,390 @@
+/* Dashboard-specific styles */
+
+/* Stats sections - keep specific styling */
+.stats-section {
+    margin-bottom: 40px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #e8eaed;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.primary {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+}
+
+.stat-card h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 15px;
+    color: inherit;
+}
+
+.big-number {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: inherit;
+}
+
+.stat-card p {
+    font-size: 13px;
+    color: inherit;
+    opacity: 0.8;
+}
+
+.waste-types {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.waste-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.waste-item span:last-child {
+    color: inherit;
+}
+
+.stat-card.primary .waste-item {
+    color: white;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* Charts */
+.chart-container {
+    background: transparent;
+    padding: 0;
+    border: none;
+    margin-bottom: 30px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.chart-header h3 {
+    font-size: 16px;
+    color: #333;
+}
+
+.chart-header h3 span {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.chart-filters {
+    display: flex;
+    gap: 15px;
+}
+
+.chart-filters select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+    background: white;
+    color: #666;
+}
+
+.chart-filters select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+canvas {
+    max-height: 300px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-filters {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-card {
+        padding: 15px;
+    }
+
+    .big-number {
+        font-size: 32px;
+    }
+}
+
+
+.stats-section {
+    margin-bottom: 40px;
+}
+
+.stats-section h2 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.primary {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+}
+
+.stat-card h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 15px;
+    color: inherit;
+}
+
+.big-number {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: inherit;
+}
+
+.stat-card p {
+    font-size: 13px;
+    color: inherit;
+    opacity: 0.8;
+}
+
+.waste-types {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.waste-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.waste-item span:last-child {
+    color: inherit;
+}
+
+.stat-card.primary .waste-item {
+    color: white;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+.charts-section {
+    margin-top: 40px;
+}
+
+.charts-section h2 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 30px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.chart-header h3 {
+    font-size: 16px;
+    color: #333;
+}
+
+.chart-header h3 span {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.chart-filters {
+    display: flex;
+    gap: 15px;
+}
+
+.chart-filters select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+    background: white;
+    color: #666;
+}
+
+.chart-filters select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+canvas {
+    max-height: 300px;
+}
+
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        z-index: 100;
+    }
+
+    .sidebar.active {
+        display: block;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .header-left h1 {
+        font-size: 20px;
+    }
+
+    .content {
+        padding: 20px;
+    }
+
+    .chart-filters {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .header-left h1 {
+        font-size: 18px;
+    }
+
+    .content {
+        padding: 15px;
+    }
+
+    .stat-card {
+        padding: 15px;
+    }
+
+    .big-number {
+        font-size: 32px;
+    }
+}

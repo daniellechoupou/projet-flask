@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WasteAI - Authentification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <h2>Welcome back !</h2>
+                <p>La technologie qui rend le tri intelligent.</p>
+            </div>
+
+            <form id="loginForm">
+                <h3 style="margin-bottom: 20px; color: #333; font-size: 18px;">Login</h3>
+                
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required>
+                </div>
+
+                <div class="form-info">Please enter your informations.</div>
+
+                <div class="btn-container">
+                    <button type="submit" class="btn-login">
+                        <span class="loading" id="loginLoading"><span class="spinner"></span></span>
+                        <span id="loginText">Connexion</span>
+                    </button>
+                </div>
+
+                <div class="message" id="loginMessage"></div>
+            </form>
+
+            <form id="registerForm" class="form-hidden">
+                <h3 style="margin-bottom: 20px; color: #333; font-size: 18px;">Register</h3>
+                
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" name="password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+
+                <div class="form-info">Créez votre compte pour commencer.</div>
+
+                <div class="btn-container">
+                    <button type="submit" class="btn-login">
+                        <span class="loading" id="registerLoading"><span class="spinner"></span></span>
+                        <span id="registerText">S'inscrire</span>
+                    </button>
+                </div>
+
+                <div class="message" id="registerMessage"></div>
+            </form>
+
+            <div class="toggle-form">
+                <span id="toggleLoginText">Pas de compte ? <a onclick="toggleForm()">S'inscrire</a></span>
+                <span id="toggleRegisterText" class="form-hidden">Déjà inscrit ? <a onclick="toggleForm()">Se connecter</a></span>
+            </div>
+
+            <div class="footer">
+                <p><strong>WasteAI</strong> - La technologie qui rend le tri intelligent.</p>
+                <p>© 2025–2026 WasteAI. Tous droits réservés.</p>
+                <p><a href="#">Conditions d'utilisation</a> | <a href="#">Paramètres Cookies</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

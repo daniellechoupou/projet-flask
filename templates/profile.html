@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WasteAI - Mon Profil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🌿</div>
+                <span>WasteAI</span>
+            </div>
+
+            <nav class="menu">
+                <h3>MENU</h3>
+                <ul>
+                    <li><a href="/dashboard"><i class="icon">📊</i> Dashboard</a></li>
+                    <li><a href="/camera"><i class="icon">📷</i> Camera</a></li>
+                    <li><a href="#"><i class="icon">📈</i> Detections</a></li>
+                </ul>
+            </nav>
+
+            <nav class="general-menu">
+                <h3>GENERAL</h3>
+                <ul>
+                    {% if session.get('role') == 'admin' %}
+                    <li><a href="/admin/users"><i class="icon">👥</i> Gestion Utilisateurs</a></li>
+                    {% endif %}
+                    <li class="active"><a href="/profile"><i class="icon">👤</i> My profile</a></li>
+                    <li><a href="#" onclick="logout()"><i class="icon">🚪</i> Sign out</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle">☰</button>
+                    <h1>Mon Profil</h1>
+                </div>
+                <div class="header-right">
+                    <span id="headerUsername" class="user-name"></span>
+                    <a href="/profile" class="avatar-link">
+                        <img id="headerAvatar" src="https://via.placeholder.com/40" alt="Profile" class="user-avatar">
+                    </a>
+                </div>
+            </header>
+
+            <div class="content">
+                <p class="subtitle">Gérez vos informations personnelles et vos préférences de compte.</p>
+
+                <!-- Photo de profil -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>📷 Photo de profil</h2>
+                    </div>
+                    <div class="profile-picture-container">
+                        <div class="current-picture">
+                            <img id="profilePicture" src="https://via.placeholder.com/150" alt="Photo de profil">
+                            <div class="picture-overlay" onclick="document.getElementById('pictureInput').click()">
+                                <span>📷 Changer</span>
+                            </div>
+                        </div>
+                        <div class="picture-actions">
+                            <input type="file" id="pictureInput" accept="image/*" style="display: none;"
+                                onchange="previewAndUpload(this)">
+                            <button class="btn btn-secondary" onclick="document.getElementById('pictureInput').click()">
+                                <span>📤</span> Choisir une photo
+                            </button>
+                            <p class="hint">Formats acceptés : JPG, PNG, GIF. Taille max : 5 Mo</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Informations personnelles -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>📝 Informations personnelles</h2>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" readonly class="input-readonly">
+                            <span class="input-hint">L'email ne peut pas être modifié</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="username">Nom d'utilisateur</label>
+                            <input type="text" id="username" placeholder="Entrez votre nom d'utilisateur">
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Rôle</label>
+                            <input type="text" id="role" readonly class="input-readonly">
+                        </div>
+                        <div class="form-group">
+                            <label for="createdAt">Membre depuis</label>
+                            <input type="text" id="createdAt" readonly class="input-readonly">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="updateProfile()">
+                            <span>💾</span> Sauvegarder les modifications
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Sécurité -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>🔐 Sécurité</h2>
+                    </div>
+                    <div class="password-form">
+                        <div class="form-group">
+                            <label for="currentPassword">Mot de passe actuel</label>
+                            <div class="password-input-container">
+                                <input type="password" id="currentPassword"
+                                    placeholder="Entrez votre mot de passe actuel">
+                                <button type="button" class="toggle-password"
+                                    onclick="togglePassword('currentPassword')">👁️</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">Nouveau mot de passe</label>
+                            <div class="password-input-container">
+                                <input type="password" id="newPassword" placeholder="Minimum 6 caractères">
+                                <button type="button" class="toggle-password"
+                                    onclick="togglePassword('newPassword')">👁️</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+                            <div class="password-input-container">
+                                <input type="password" id="confirmPassword"
+                                    placeholder="Répétez le nouveau mot de passe">
+                                <button type="button" class="toggle-password"
+                                    onclick="togglePassword('confirmPassword')">👁️</button>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-warning" onclick="changePassword()">
+                                <span>🔑</span> Modifier le mot de passe
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+</body>
+
+</html>

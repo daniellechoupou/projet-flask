@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WasteAI - Camera</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shared_layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🌿</div>
+                <span>WasteAI</span>
+            </div>
+
+            <nav class="menu">
+                <h3>MENU</h3>
+                <ul>
+                    <li><a href="/dashboard"><i class="icon">📊</i> Dashboard</a></li>
+                    <li class="active"><a href="/camera"><i class="icon">📷</i> Camera</a></li>
+                    <li><a href="#"><i class="icon">📈</i> Detections</a></li>
+                </ul>
+            </nav>
+
+            <nav class="general-menu">
+                <h3>GENERAL</h3>
+                <ul>
+                    {% if session.get('role') == 'admin' %}
+                    <li><a href="/admin/users"><i class="icon">👥</i> Gestion Utilisateurs</a></li>
+                    {% endif %}
+                    <li><a href="/profile"><i class="icon">👤</i> My profile</a></li>
+                    <li><a href="#" onclick="logout()"><i class="icon">🚪</i> Sign out</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle">☰</button>
+                    <h1>Camera</h1>
+                </div>
+                <div class="header-right">
+                    <span id="headerUsername" class="user-email">{{ email }}</span>
+                    <a href="/profile" class="avatar-link">
+                        <img id="headerAvatar" src="https://via.placeholder.com/40" alt="Profile" class="user-avatar">
+                    </a>
+                </div>
+            </header>
+
+            <div class="content">
+                <p class="subtitle">Visualisez ce que votre robot voit et son état.</p>
+
+                <!-- SECTION 1 : LOCALISATION ET BATTERIE -->
+                <section class="content-sheet">
+                    <div class="section-header">
+                        <h2>📍 Localisation du robot</h2>
+                    </div>
+                    <div class="location-card">
+                        <p id="robotLocation">Glacier Moderne, Bonamoussadi</p>
+                        <p id="robotCity">Douala Cameroun</p>
+                    </div>
+
+                    <div class="battery-section">
+                        <h3>Niveau de la batterie</h3>
+                        <div class="battery-status">
+                            <div class="battery-container">
+                                <div class="battery-bar">
+                                    <div class="battery-fill" id="batteryFill"></div>
+                                </div>
+                                <span id="batteryPercent">0%</span>
+                            </div>
+                            <p id="batteryState">Éteint</p>
+                        </div>
+                    </div>
+
+                    <div class="camera-controls">
+                        <button id="startCameraBtn" class="btn btn-primary" onclick="startCamera()">🎥 Activer la
+                            caméra</button>
+                        <button id="stopCameraBtn" class="btn btn-secondary" onclick="stopCamera()"
+                            style="display: none;">🛑 Arrêter</button>
+                    </div>
+                </section>
+
+                <!-- SECTION 2 : FLUX VIDÉO AVEC DÉTECTIONS EN TEMPS RÉEL -->
+                <section class="content-sheet">
+                    <div class="section-header">
+                        <h2>📹 Caméra du robot en temps réel</h2>
+                    </div>
+
+                    <div class="video-container">
+                        <img id="videoFeed" src="" alt="Flux vidéo"
+                            style="width: 100%; max-width: 800px; border-radius: 8px; display: none;">
+                        <div id="noVideoDisplay" class="no-feed">
+                            <p>📹 Vidéo coupée</p>
+                            <small>Activez la caméra pour commencer</small>
+                        </div>
+                    </div>
+
+                    <div class="detection-summary" id="detectionSummary" style="margin-top: 20px; display: none;">
+                        <h3>🔍 Détections en cours</h3>
+                        <div id="detectionsList"></div>
+                    </div>
+                </section>
+
+                <!-- SECTION 3 : INFOS DU ROBOT -->
+                <section class="content-sheet">
+                    <div class="section-header">
+                        <h2>🤖 Informations du robot</h2>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h3>Etat du robot</h3>
+                            <div class="status-content">
+                                <div class="status-indicator" id="robotStatusIndicator"></div>
+                                <p id="robotStatusText">Inactif</p>
+                            </div>
+                        </div>
+
+                        <div class="info-card">
+                            <h3>Position du robot</h3>
+                            <p id="positionText">Glacier Moderne, Bonamoussadi</p>
+                            <p class="city-text">Douala Cameroun</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 4 : STATISTIQUES -->
+                <section class="content-sheet">
+                    <div class="section-header">
+                        <h2>📊 Statistiques</h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Détections aujourd'hui</h3>
+                            <div class="stat-number" id="detectionToday">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Quantité aujourd'hui</h3>
+                            <div class="stat-number" id="quantityToday">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total des détections</h3>
+                            <div class="stat-number" id="totalDetections">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total quantité</h3>
+                            <div class="stat-number" id="totalQuantity">0</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+</body>
+
+</html>

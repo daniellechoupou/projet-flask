@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WasteAI - Gestion Utilisateurs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shared_layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_users.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🌿</div>
+                <span>WasteAI</span>
+            </div>
+
+            <nav class="menu">
+                <h3>MENU</h3>
+                <ul>
+                    <li><a href="/dashboard"><i class="icon">📊</i> Dashboard</a></li>
+                    <li><a href="/camera"><i class="icon">📷</i> Camera</a></li>
+                    <li><a href="#"><i class="icon">📈</i> Detections</a></li>
+                </ul>
+            </nav>
+
+            <nav class="general-menu">
+                <h3>GENERAL</h3>
+                <ul>
+                    <li class="active"><a href="/admin/users"><i class="icon">👥</i> Gestion Utilisateurs</a></li>
+                    <li><a href="/profile"><i class="icon">👤</i> My profile</a></li>
+                    <li><a href="#" onclick="logout()"><i class="icon">🚪</i> Sign out</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle">☰</button>
+                    <h1>Gestion des Utilisateurs</h1>
+                </div>
+                <div class="header-right">
+                    <span id="headerUsername" class="user-email">{{ email }}</span>
+                    <a href="/profile" class="avatar-link">
+                        <img id="headerAvatar" src="https://via.placeholder.com/40" alt="Profile" class="user-avatar">
+                    </a>
+                </div>
+            </header>
+
+            <div class="content">
+                <p class="subtitle">Gérez les utilisateurs et leurs permissions.</p>
+
+                <section class="content-sheet">
+                    <div class="section-header">
+                        <h2>👥 Liste des utilisateurs</h2>
+                    </div>
+                    <div class="users-table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Rôle</th>
+                                    <th>Date de création</th>
+                                    <th>Dernière connexion</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="5" class="loading">Chargement...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin_users.js') }}"></script>
+</body>
+
+</html>
