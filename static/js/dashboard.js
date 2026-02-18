@@ -1,6 +1,7 @@
 // Variables globales pour les graphiques
 let monthlyChartInstance = null;
 let weeklyChartInstance = null;
+let pieChartInstance = null;
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,31 +15,41 @@ document.addEventListener('DOMContentLoaded', () => {
 // Charger les informations de l'utilisateur
 async function loadUserInfo() {
     try {
-        const response = await fetch('/api/user/info');
+        console.log('Loading user info...');
+        const response = await fetch('/api/profile');
         const data = await response.json();
+        console.log('User data received:', data);
 
         if (data.success) {
-            // Mettre à jour le username
+            // Mettre à jour le username dans le header et le titre de bienvenue
             const usernameEl = document.getElementById('headerUsername');
+            const welcomeBanner = document.getElementById('welcomeBanner');
+            const welcomeTitle = document.getElementById('welcomeTitle');
+
+            const displayUsername = data.username || data.email;
+            console.log('Display username:', displayUsername);
+
             if (usernameEl) {
-                usernameEl.textContent = data.username;
+                usernameEl.textContent = displayUsername;
+                console.log('Username updated in header');
             }
-            // Fallback pour ancien id
-            const userEmailEl = document.getElementById('userEmail');
-            if (userEmailEl) {
-                userEmailEl.textContent = data.username;
+
+            if (welcomeBanner && welcomeTitle) {
+                welcomeTitle.textContent = `Bonjour, ${data.username || 'utilisateur'} !`;
+                welcomeBanner.style.display = 'block';
+                console.log('Welcome banner displayed');
             }
 
             // Mettre à jour la photo de profil
             const avatarEl = document.getElementById('headerAvatar');
             if (avatarEl && data.profile_picture) {
                 avatarEl.src = data.profile_picture;
+                console.log('Profile picture updated:', data.profile_picture);
+            } else if (avatarEl) {
+                console.log('No profile picture in data, using default');
             }
-            // Fallback pour ancien sélecteur
-            const avatarOld = document.querySelector('.user-avatar');
-            if (avatarOld && data.profile_picture) {
-                avatarOld.src = data.profile_picture;
-            }
+        } else {
+            console.error('User data fetch failed:', data);
         }
     } catch (error) {
         console.error('Erreur chargement info utilisateur:', error);
@@ -48,15 +59,24 @@ async function loadUserInfo() {
 // Charger les statistiques
 async function loadStatistics() {
     try {
-        const [currentMonth, lastMonth, total] = await Promise.all([
-            fetch('/api/stats/current-month').then(r => r.json()),
+        console.log('Loading statistics...');
+        const [currentDistribution, lastMonth, total] = await Promise.all([
+            fetch('/api/stats/monthly-distribution').then(r => r.json()), // Use the general distribution point
             fetch('/api/stats/last-month').then(r => r.json()),
             fetch('/api/stats/total').then(r => r.json())
         ]);
 
-        displayStats('currentMonthTotal', 'currentMonthWaste', currentMonth);
+        console.log('Current month data:', currentDistribution);
+        console.log('Last month data:', lastMonth);
+        console.log('Total data:', total);
+
+        displayStats('currentMonthTotal', 'currentMonthWaste', currentDistribution);
         displayStats('lastMonthTotal', 'lastMonthWaste', lastMonth);
         displayStats('totalSince', 'totalWaste', total);
+
+        // Initial pie chart load with current data
+        updatePieChart(currentDistribution);
+        console.log('Statistics loaded successfully');
     } catch (error) {
         console.error('Erreur lors du chargement des statistiques:', error);
     }
@@ -93,6 +113,103 @@ function displayStats(totalId, wasteId, data) {
 async function initializeCharts() {
     await updateMonthlyChart();
     await updateWeeklyChart();
+    // Pie chart is handled by loadStatistics for the first load
+}
+
+// Mettre à jour le diagramme circulaire
+async function updatePieChart(existingData = null) {
+    let data;
+    if (existingData) {
+        data = existingData;
+    } else {
+        const year = document.getElementById('pieYearFilter').value;
+        const month = document.getElementById('pieMonthFilter').value;
+        try {
+            const response = await fetch(`/api/stats/monthly-distribution?year=${year}&month=${month}`);
+            data = await response.json();
+        } catch (error) {
+            console.error('Erreur lors du chargement du diagramme circulaire:', error);
+            return;
+        }
+    }
+
+    const canvas = document.getElementById('pieChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (pieChartInstance) {
+        pieChartInstance.destroy();
+    }
+
+    const labels = Object.keys(data.waste_types);
+    const values = Object.values(data.waste_types);
+
+    if (labels.length === 0) {
+        // Draw informational message if empty
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#999";
+        ctx.textAlign = "center";
+        ctx.fillText("Aucune donnée pour ce mois", canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
+    const colors = {
+        'Papier': '#2196F3',
+        'Plastique': '#9C27B0',
+        'Métal': '#FF9800',
+        'Verre': '#00BCD4',
+        'Carton': '#FF5722',
+        'Organique': '#4CAF50'
+    };
+
+    const backgroundColors = labels.map(label => colors[label] || '#4CAF50');
+
+    pieChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: backgroundColors,
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 15
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#333',
+                    bodyColor: '#333',
+                    borderColor: '#ddd',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Mettre à jour le graphique mensuel

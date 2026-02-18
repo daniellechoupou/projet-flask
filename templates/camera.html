@@ -8,22 +8,23 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/shared_layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon">🌿</div>
+                <div class="logo-icon"><i class="fas fa-leaf"></i></div>
                 <span>WasteAI</span>
             </div>
 
             <nav class="menu">
                 <h3>MENU</h3>
                 <ul>
-                    <li><a href="/dashboard"><i class="icon">📊</i> Dashboard</a></li>
-                    <li class="active"><a href="/camera"><i class="icon">📷</i> Camera</a></li>
-                    <li><a href="#"><i class="icon">📈</i> Detections</a></li>
+                    <li><a href="/dashboard"><i class="icon fas fa-chart-line"></i> Dashboard</a></li>
+                    <li class="active"><a href="/camera"><i class="icon fas fa-camera"></i> Camera</a></li>
+                    <li><a href="/detections"><i class="icon fas fa-chart-bar"></i> Detections</a></li>
                 </ul>
             </nav>
 
@@ -31,10 +32,10 @@
                 <h3>GENERAL</h3>
                 <ul>
                     {% if session.get('role') == 'admin' %}
-                    <li><a href="/admin/users"><i class="icon">👥</i> Gestion Utilisateurs</a></li>
+                    <li><a href="/admin/users"><i class="icon fas fa-users"></i> Gestion Utilisateurs</a></li>
                     {% endif %}
-                    <li><a href="/profile"><i class="icon">👤</i> My profile</a></li>
-                    <li><a href="#" onclick="logout()"><i class="icon">🚪</i> Sign out</a></li>
+                    <li><a href="/profile"><i class="icon fas fa-user"></i> My profile</a></li>
+                    <li><a href="#" onclick="logout()"><i class="icon fas fa-sign-out-alt"></i> Sign out</a></li>
                 </ul>
             </nav>
         </aside>
@@ -42,10 +43,25 @@
         <main class="main-content">
             <header class="header">
                 <div class="header-left">
-                    <button class="menu-toggle">☰</button>
+                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
                     <h1>Camera</h1>
                 </div>
                 <div class="header-right">
+                    <div class="notification-container">
+                        <button id="notificationBtn" class="notification-btn" onclick="toggleNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" class="notification-badge">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="notification-dropdown">
+                            <div class="notification-header">
+                                <h3>Notifications</h3>
+                                <button onclick="markAllAsRead()" class="btn-mark-all">Tout marquer comme lu</button>
+                            </div>
+                            <div id="notificationsList" class="notifications-list">
+                                <!-- Notifications will be inserted here by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
                     <span id="headerUsername" class="user-email">{{ email }}</span>
                     <a href="/profile" class="avatar-link">
                         <img id="headerAvatar" src="https://via.placeholder.com/40" alt="Profile" class="user-avatar">
@@ -59,7 +75,7 @@
                 <!-- SECTION 1 : LOCALISATION ET BATTERIE -->
                 <section class="content-sheet">
                     <div class="section-header">
-                        <h2>📍 Localisation du robot</h2>
+                        <h2><i class="fas fa-map-marker-alt"></i> Localisation du robot</h2>
                     </div>
                     <div class="location-card">
                         <p id="robotLocation">Glacier Moderne, Bonamoussadi</p>
@@ -80,30 +96,31 @@
                     </div>
 
                     <div class="camera-controls">
-                        <button id="startCameraBtn" class="btn btn-primary" onclick="startCamera()">🎥 Activer la
+                        <button id="startCameraBtn" class="btn btn-primary" onclick="startCamera()"><i
+                                class="fas fa-video"></i> Activer la
                             caméra</button>
                         <button id="stopCameraBtn" class="btn btn-secondary" onclick="stopCamera()"
-                            style="display: none;">🛑 Arrêter</button>
+                            style="display: none;"><i class="fas fa-stop"></i> Arrêter</button>
                     </div>
                 </section>
 
                 <!-- SECTION 2 : FLUX VIDÉO AVEC DÉTECTIONS EN TEMPS RÉEL -->
                 <section class="content-sheet">
                     <div class="section-header">
-                        <h2>📹 Caméra du robot en temps réel</h2>
+                        <h2><i class="fas fa-video"></i> Caméra du robot en temps réel</h2>
                     </div>
 
                     <div class="video-container">
                         <img id="videoFeed" src="" alt="Flux vidéo"
                             style="width: 100%; max-width: 800px; border-radius: 8px; display: none;">
                         <div id="noVideoDisplay" class="no-feed">
-                            <p>📹 Vidéo coupée</p>
+                            <p><i class="fas fa-video-slash"></i> Vidéo coupée</p>
                             <small>Activez la caméra pour commencer</small>
                         </div>
                     </div>
 
                     <div class="detection-summary" id="detectionSummary" style="margin-top: 20px; display: none;">
-                        <h3>🔍 Détections en cours</h3>
+                        <h3><i class="fas fa-search"></i> Détections en cours</h3>
                         <div id="detectionsList"></div>
                     </div>
                 </section>
@@ -111,7 +128,7 @@
                 <!-- SECTION 3 : INFOS DU ROBOT -->
                 <section class="content-sheet">
                     <div class="section-header">
-                        <h2>🤖 Informations du robot</h2>
+                        <h2><i class="fas fa-robot"></i> Informations du robot</h2>
                     </div>
                     <div class="info-grid">
                         <div class="info-card">
@@ -133,7 +150,7 @@
                 <!-- SECTION 4 : STATISTIQUES -->
                 <section class="content-sheet">
                     <div class="section-header">
-                        <h2>📊 Statistiques</h2>
+                        <h2><i class="fas fa-chart-bar"></i> Statistiques</h2>
                     </div>
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -158,6 +175,7 @@
         </main>
     </div>
 
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     <script src="{{ url_for('static', filename='js/camera.js') }}"></script>
 </body>
 

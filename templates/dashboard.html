@@ -8,22 +8,23 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/shared_layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon">🌿</div>
+                <div class="logo-icon"><i class="fas fa-leaf"></i></div>
                 <span>WasteAI</span>
             </div>
 
             <nav class="menu">
                 <h3>MENU</h3>
                 <ul>
-                    <li class="active"><a href="/dashboard"><i class="icon">📊</i> Dashboard</a></li>
-                    <li><a href="/camera"><i class="icon">📷</i> Camera</a></li>
-                    <li><a href="#"><i class="icon">📈</i> Detections</a></li>
+                    <li class="active"><a href="/dashboard"><i class="icon fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/camera"><i class="icon fas fa-camera"></i> Camera</a></li>
+                    <li><a href="/detections"><i class="icon fas fa-chart-bar"></i> Detections</a></li>
                 </ul>
             </nav>
 
@@ -31,10 +32,10 @@
                 <h3>GENERAL</h3>
                 <ul>
                     {% if session.get('role') == 'admin' %}
-                    <li><a href="/admin/users"><i class="icon">👥</i> Gestion Utilisateurs</a></li>
+                    <li><a href="/admin/users"><i class="icon fas fa-users"></i> Gestion Utilisateurs</a></li>
                     {% endif %}
-                    <li><a href="/profile"><i class="icon">👤</i> Mon profil</a></li>
-                    <li><a href="#" onclick="logout()"><i class="icon">🚪</i> Deconnexion</a></li>
+                    <li><a href="/profile"><i class="icon fas fa-user"></i> Mon profil</a></li>
+                    <li><a href="#" onclick="logout()"><i class="icon fas fa-sign-out-alt"></i> Deconnexion</a></li>
                 </ul>
             </nav>
         </aside>
@@ -42,10 +43,25 @@
         <main class="main-content">
             <header class="header">
                 <div class="header-left">
-                    <button class="menu-toggle">☰</button>
+                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
                     <h1>Dashboard</h1>
                 </div>
                 <div class="header-right">
+                    <div class="notification-container">
+                        <button id="notificationBtn" class="notification-btn" onclick="toggleNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" class="notification-badge">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="notification-dropdown">
+                            <div class="notification-header">
+                                <h3>Notifications</h3>
+                                <button onclick="markAllAsRead()" class="btn-mark-all">Tout marquer comme lu</button>
+                            </div>
+                            <div id="notificationsList" class="notifications-list">
+                                <!-- Notifications will be inserted here by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
                     <span id="headerUsername" class="user-email">{{ email }}</span>
                     <a href="/profile" class="avatar-link">
                         <img id="headerAvatar" src="https://via.placeholder.com/40" alt="Profile" class="user-avatar">
@@ -56,9 +72,19 @@
             <div class="content">
                 <p class="subtitle">Une vision globale des données envoyées par votre robot.</p>
 
+                <div id="welcomeBanner" class="welcome-banner" style="display: none;">
+                    <div class="welcome-content">
+                        <i class="fas fa-hand-sparkles"></i>
+                        <div>
+                            <h2 id="welcomeTitle">Bonjour, utilisateur !</h2>
+                            <p>Content de vous revoir. Voici un résumé de vos activités de tri.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <section class="content-sheet">
                     <div class="section-header">
-                        <h2>📊 Ce mois</h2>
+                        <h2><i class="fas fa-chart-bar"></i> Ce mois</h2>
                     </div>
                     <div class="stats-grid">
                         <div class="stat-card primary">
@@ -81,7 +107,7 @@
 
                 <section class="content-sheet">
                     <div class="section-header">
-                        <h2>📅 Le mois dernier</h2>
+                        <h2><i class="fas fa-calendar-alt"></i> Le mois dernier</h2>
                     </div>
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -104,7 +130,7 @@
 
                 <section class="content-sheet">
                     <div class="section-header">
-                        <h2>📈 Total depuis début de collecte</h2>
+                        <h2><i class="fas fa-chart-line"></i> Total depuis début de collecte</h2>
                     </div>
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -128,7 +154,42 @@
 
                 <section class="content-sheet">
                     <div class="section-header">
-                        <h2>📉 Graphes</h2>
+                        <h2><i class="fas fa-chart-pie"></i> Répartition par type</h2>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Répartition mensuelle des déchets</h3>
+                            <div class="chart-filters">
+                                <select id="pieYearFilter" onchange="updatePieChart()">
+                                    <option value="2025">2025</option>
+                                    <option value="2026" selected>2026</option>
+                                </select>
+                                <select id="pieMonthFilter" onchange="updatePieChart()">
+                                    <option value="01">Janvier</option>
+                                    <option value="02" selected>Février</option>
+                                    <option value="03">Mars</option>
+                                    <option value="04">Avril</option>
+                                    <option value="05">Mai</option>
+                                    <option value="06">Juin</option>
+                                    <option value="07">Juillet</option>
+                                    <option value="08">Août</option>
+                                    <option value="09">Septembre</option>
+                                    <option value="10">Octobre</option>
+                                    <option value="11">Novembre</option>
+                                    <option value="12">Décembre</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="max-width: 350px; margin: 0 auto;">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="content-sheet">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-area"></i> Graphes</h2>
                     </div>
 
                     <div class="chart-container">
@@ -138,8 +199,8 @@
                                 <select id="yearFilter" onchange="updateMonthlyChart()">
                                     <option value="2023">2023</option>
                                     <option value="2024">2024</option>
-                                    <option value="2025" selected>2025</option>
-                                    <option value="2026">2026</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026" selected>2026</option>
                                 </select>
                                 <select id="monthWasteFilter" onchange="updateMonthlyChart()">
                                     <option value="all">Tous les déchets</option>
@@ -182,6 +243,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
 

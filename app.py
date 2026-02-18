@@ -98,6 +98,16 @@ def init_db():
                   camera_status TEXT,
                   FOREIGN KEY(user_id) REFERENCES users(id))''')
     
+    # Table des notifications
+    c.execute('''CREATE TABLE IF NOT EXISTS notifications
+                 (id INTEGER PRIMARY KEY,
+                  user_id INTEGER,
+                  message TEXT,
+                  type TEXT DEFAULT 'info',
+                  is_read BOOLEAN DEFAULT 0,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY(user_id) REFERENCES users(id))''')
+    
     conn.commit()
     conn.close()
 
@@ -213,6 +223,20 @@ def allowed_file(filename):
 def profile_page():
     """Page de profil utilisateur"""
     return render_template('profile.html', email=session.get('email'))
+
+@app.route('/logout')
+def logout_user():
+    """Déconnexion de l'utilisateur"""
+    session.clear()
+    return redirect('/login')
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    """API de déconnexion"""
+    session.clear()
+    return jsonify({'success': True})
+
+
 
 @app.route('/api/profile', methods=['GET'])
 @login_required
@@ -378,149 +402,6 @@ def get_user_info():
 @login_required
 def dashboard():
     return render_template('dashboard.html', email=session.get('email'))
-
-@app.route('/api/stats/current-month', methods=['GET'])
-@login_required
-def get_current_month_stats():
-    user_id = session.get('user_id')
-    today = datetime.now()
-    first_day = today.replace(day=1)
-    
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    
-    c.execute('''SELECT SUM(quantity) FROM waste_detection 
-                 WHERE user_id = ? AND detection_date >= ?''',
-              (user_id, first_day))
-    total = c.fetchone()[0] or 0
-    
-    c.execute('''SELECT waste_type, SUM(quantity) FROM waste_detection 
-                 WHERE user_id = ? AND detection_date >= ?
-                 GROUP BY waste_type''',
-              (user_id, first_day))
-    waste_types = c.fetchall()
-    conn.close()
-    
-    waste_data = {row[0]: row[1] for row in waste_types}
-    
-    return jsonify({'total': total, 'waste_types': waste_data})
-
-@app.route('/api/stats/last-month', methods=['GET'])
-@login_required
-def get_last_month_stats():
-    user_id = session.get('user_id')
-    today = datetime.now()
-    first_day_current = today.replace(day=1)
-    first_day_last = (first_day_current - timedelta(days=1)).replace(day=1)
-    
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    
-    c.execute('''SELECT SUM(quantity) FROM waste_detection 
-                 WHERE user_id = ? AND detection_date >= ? AND detection_date < ?''',
-              (user_id, first_day_last, first_day_current))
-    total = c.fetchone()[0] or 0
-    
-    c.execute('''SELECT waste_type, SUM(quantity) FROM waste_detection 
-                 WHERE user_id = ? AND detection_date >= ? AND detection_date < ?
-                 GROUP BY waste_type''',
-              (user_id, first_day_last, first_day_current))
-    waste_types = c.fetchall()
-    conn.close()
-    
-    waste_data = {row[0]: row[1] for row in waste_types}
-    
-    return jsonify({'total': total, 'waste_types': waste_data})
-
-@app.route('/api/stats/total', methods=['GET'])
-@login_required
-def get_total_stats():
-    user_id = session.get('user_id')
-    
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    
-    c.execute('''SELECT SUM(quantity) FROM waste_detection WHERE user_id = ?''', (user_id,))
-    total = c.fetchone()[0] or 0
-    
-    c.execute('''SELECT waste_type, SUM(quantity) FROM waste_detection 
-                 WHERE user_id = ?
-                 GROUP BY waste_type''', (user_id,))
-    waste_types = c.fetchall()
-    conn.close()
-    
-    waste_data = {row[0]: row[1] for row in waste_types}
-    
-    return jsonify({'total': total, 'waste_types': waste_data})
-
-@app.route('/api/chart/monthly', methods=['GET'])
-@login_required
-def get_monthly_chart():
-    user_id = session.get('user_id')
-    year = request.args.get('year', datetime.now().year, type=int)
-    waste_type = request.args.get('waste_type', 'all')
-    
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    
-    months = list(range(1, 13))
-    data = []
-    
-    for month in months:
-        if waste_type == 'all':
-            c.execute('''SELECT SUM(quantity) FROM waste_detection 
-                         WHERE user_id = ? AND strftime('%Y-%m', detection_date) = ?''',
-                      (user_id, f'{year:04d}-{month:02d}'))
-        else:
-            c.execute('''SELECT SUM(quantity) FROM waste_detection 
-                         WHERE user_id = ? AND waste_type = ? AND strftime('%Y-%m', detection_date) = ?''',
-                      (user_id, waste_type, f'{year:04d}-{month:02d}'))
-        
-        result = c.fetchone()[0] or 0
-        data.append(result)
-    
-    conn.close()
-    month_names = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
-    
-    return jsonify({'months': month_names, 'data': data})
-
-@app.route('/api/chart/weekly', methods=['GET'])
-@login_required
-def get_weekly_chart():
-    user_id = session.get('user_id')
-    week_offset = request.args.get('week_offset', 0, type=int)
-    waste_type = request.args.get('waste_type', 'all')
-    
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    
-    today = datetime.now()
-    week_start = today - timedelta(days=today.weekday()) - timedelta(weeks=week_offset)
-    
-    days = []
-    data = []
-    day_names = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-    
-    for i in range(7):
-        day = week_start + timedelta(days=i)
-        day_str = day.strftime('%Y-%m-%d')
-        
-        if waste_type == 'all':
-            c.execute('''SELECT SUM(quantity) FROM waste_detection 
-                         WHERE user_id = ? AND DATE(detection_date) = ?''',
-                      (user_id, day_str))
-        else:
-            c.execute('''SELECT SUM(quantity) FROM waste_detection 
-                         WHERE user_id = ? AND waste_type = ? AND DATE(detection_date) = ?''',
-                      (user_id, waste_type, day_str))
-        
-        result = c.fetchone()[0] or 0
-        days.append(day_names[i])
-        data.append(result)
-    
-    conn.close()
-    
-    return jsonify({'days': days, 'data': data})
 
 @app.route('/api/waste/add', methods=['POST'])
 @login_required
@@ -984,6 +865,196 @@ def yolo_save_detections():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
 
+# ==================== ROUTES STATS & CHARTS ====================
+
+@app.route('/api/stats/monthly-distribution', methods=['GET'])
+@login_required
+def get_monthly_distribution():
+    """Statistiques d'un mois spécifique pour le diagramme circulaire"""
+    user_id = session.get('user_id')
+    month = request.args.get('month', datetime.now().strftime('%m'))
+    year = request.args.get('year', datetime.now().strftime('%Y'))
+    
+    target_month = f"{year}-{month}"
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        c.execute('''SELECT waste_type, SUM(quantity) 
+                     FROM waste_detection 
+                     WHERE user_id = ? 
+                     AND strftime('%Y-%m', detection_date) = ?
+                     GROUP BY waste_type''', (user_id, target_month))
+        
+        results = c.fetchall()
+        conn.close()
+        
+        waste_types = {row[0]: row[1] for row in results}
+        total = sum(waste_types.values())
+        
+        return jsonify({
+            'total': total,
+            'waste_types': waste_types
+        })
+    except Exception as e:
+        return jsonify({'total': 0, 'waste_types': {}}), 500
+
+@app.route('/api/stats/last-month', methods=['GET'])
+@login_required
+def get_last_month_stats():
+    """Statistiques du mois dernier"""
+    user_id = session.get('user_id')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        # Get last month data
+        c.execute('''SELECT waste_type, SUM(quantity) 
+                     FROM waste_detection 
+                     WHERE user_id = ? 
+                     AND strftime('%Y-%m', detection_date) = strftime('%Y-%m', 'now', '-1 month')
+                     GROUP BY waste_type''', (user_id,))
+        
+        results = c.fetchall()
+        conn.close()
+        
+        waste_types = {row[0]: row[1] for row in results}
+        total = sum(waste_types.values())
+        
+        return jsonify({
+            'total': total,
+            'waste_types': waste_types
+        })
+    except Exception as e:
+        return jsonify({'total': 0, 'waste_types': {}}), 500
+
+@app.route('/api/stats/total', methods=['GET'])
+@login_required
+def get_total_stats():
+    """Statistiques totales"""
+    user_id = session.get('user_id')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        # Get all time data
+        c.execute('''SELECT waste_type, SUM(quantity) 
+                     FROM waste_detection 
+                     WHERE user_id = ? 
+                     GROUP BY waste_type''', (user_id,))
+        
+        results = c.fetchall()
+        conn.close()
+        
+        waste_types = {row[0]: row[1] for row in results}
+        total = sum(waste_types.values())
+        
+        return jsonify({
+            'total': total,
+            'waste_types': waste_types
+        })
+    except Exception as e:
+        return jsonify({'total': 0, 'waste_types': {}}), 500
+
+@app.route('/api/chart/monthly', methods=['GET'])
+@login_required
+def get_monthly_chart():
+    """Données pour le graphique mensuel"""
+    user_id = session.get('user_id')
+    year = request.args.get('year', datetime.now().year, type=int)
+    waste_type = request.args.get('waste_type', 'all')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aout', 'Sep', 'Oct', 'Nov', 'Dec']
+        data = []
+        
+        for month_num in range(1, 13):
+            if waste_type == 'all':
+                c.execute('''SELECT SUM(quantity) 
+                             FROM waste_detection 
+                             WHERE user_id = ? 
+                             AND strftime('%Y', detection_date) = ? 
+                             AND strftime('%m', detection_date) = ?''',
+                         (user_id, str(year), f'{month_num:02d}'))
+            else:
+                c.execute('''SELECT SUM(quantity) 
+                             FROM waste_detection 
+                             WHERE user_id = ? 
+                             AND waste_type = ?
+                             AND strftime('%Y', detection_date) = ? 
+                             AND strftime('%m', detection_date) = ?''',
+                         (user_id, waste_type, str(year), f'{month_num:02d}'))
+            
+            result = c.fetchone()
+            data.append(result[0] if result[0] else 0)
+        
+        conn.close()
+        
+        return jsonify({
+            'months': months,
+            'data': data
+        })
+    except Exception as e:
+        print(f"Error in monthly chart: {e}")
+        return jsonify({'months': [], 'data': []}), 500
+
+@app.route('/api/chart/weekly', methods=['GET'])
+@login_required
+def get_weekly_chart():
+    """Données pour le graphique hebdomadaire"""
+    user_id = session.get('user_id')
+    week_offset = request.args.get('week_offset', 0, type=int)
+    waste_type = request.args.get('waste_type', 'all')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+        data = []
+        
+        # Calculate start of week
+        from datetime import timedelta
+        today = datetime.now()
+        start_of_week = today - timedelta(days=today.weekday()) - timedelta(weeks=week_offset)
+        
+        for day_num in range(7):
+            target_date = start_of_week + timedelta(days=day_num)
+            date_str = target_date.strftime('%Y-%m-%d')
+            
+            if waste_type == 'all':
+                c.execute('''SELECT SUM(quantity) 
+                             FROM waste_detection 
+                             WHERE user_id = ? 
+                             AND DATE(detection_date) = ?''',
+                         (user_id, date_str))
+            else:
+                c.execute('''SELECT SUM(quantity) 
+                             FROM waste_detection 
+                             WHERE user_id = ? 
+                             AND waste_type = ?
+                             AND DATE(detection_date) = ?''',
+                         (user_id, waste_type, date_str))
+            
+            result = c.fetchone()
+            data.append(result[0] if result[0] else 0)
+        
+        conn.close()
+        
+        return jsonify({
+            'days': days,
+            'data': data
+        })
+    except Exception as e:
+        print(f"Error in weekly chart: {e}")
+        return jsonify({'days': [], 'data': []}), 500
+
 # ==================== ROUTES ADMIN ====================
 
 @app.route('/admin/users')
@@ -1074,6 +1145,331 @@ def delete_user(user_id):
         return jsonify({'success': True, 'message': 'Utilisateur supprimé'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+# ==================== ROUTES NOTIFICATIONS ====================
+
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+def get_notifications():
+    """Récupérer toutes les notifications de l'utilisateur"""
+    user_id = session.get('user_id')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        c.execute('''SELECT id, message, type, is_read, created_at 
+                     FROM notifications 
+                     WHERE user_id = ? 
+                     ORDER BY created_at DESC 
+                     LIMIT 50''', (user_id,))
+        
+        notifications = []
+        for row in c.fetchall():
+            notifications.append({
+                'id': row[0],
+                'message': row[1],
+                'type': row[2],
+                'is_read': bool(row[3]),
+                'created_at': row[4]
+            })
+        
+        # Compter les non-lues
+        c.execute('SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0', (user_id,))
+        unread_count = c.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications,
+            'unread_count': unread_count
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/notifications/<int:notification_id>/mark-read', methods=['POST'])
+@login_required
+def mark_notification_read(notification_id):
+    """Marquer une notification comme lue"""
+    user_id = session.get('user_id')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        c.execute('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?', 
+                  (notification_id, user_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Notification marquée comme lue'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/notifications/mark-all-read', methods=['POST'])
+@login_required
+def mark_all_notifications_read():
+    """Marquer toutes les notifications comme lues"""
+    user_id = session.get('user_id')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        c.execute('UPDATE notifications SET is_read = 1 WHERE user_id = ?', (user_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Toutes les notifications marquées comme lues'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/notifications/<int:notification_id>', methods=['DELETE'])
+@login_required
+def delete_notification(notification_id):
+    """Supprimer une notification"""
+    user_id = session.get('user_id')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        c.execute('DELETE FROM notifications WHERE id = ? AND user_id = ?', 
+                  (notification_id, user_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Notification supprimée'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# ==================== ROUTES DETECTION PAGE ====================
+
+@app.route('/detections')
+@login_required
+def detections_page():
+    """Page de détection avec liste et exports"""
+    return render_template('detections.html', email=session.get('email'))
+
+@app.route('/api/detections/list', methods=['GET'])
+@login_required
+def get_detections_list():
+    """Récupérer la liste des détections avec filtres et pagination"""
+    user_id = session.get('user_id')
+    
+    # Get filters from query params
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    waste_type = request.args.get('waste_type', 'all')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        query = '''SELECT id, waste_type, quantity, detection_date 
+                   FROM waste_detection 
+                   WHERE user_id = ?'''
+        params = [user_id]
+        
+        if start_date:
+            query += ' AND DATE(detection_date) >= ?'
+            params.append(start_date)
+        
+        if end_date:
+            query += ' AND DATE(detection_date) <= ?'
+            params.append(end_date)
+        
+        if waste_type and waste_type != 'all':
+            query += ' AND waste_type = ?'
+            params.append(waste_type)
+        
+        # Get total count before pagination
+        count_query = query.replace('SELECT id, waste_type, quantity, detection_date', 'SELECT COUNT(*)')
+        c.execute(count_query, params)
+        total = c.fetchone()[0]
+        
+        # Add pagination
+        query += ' ORDER BY detection_date DESC LIMIT ? OFFSET ?'
+        params.extend([per_page, (page - 1) * per_page])
+        
+        c.execute(query, params)
+        detections = c.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'detections': [{'id': d[0], 'waste_type': d[1], 'quantity': d[2], 'date': d[3]} for d in detections],
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': (total + per_page - 1) // per_page
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/detections/export/csv', methods=['GET'])
+@login_required
+def export_detections_csv():
+    """Exporter les détections en CSV"""
+    import csv
+    from io import StringIO
+    
+    user_id = session.get('user_id')
+    
+    # Get filters
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    waste_type = request.args.get('waste_type', 'all')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        query = '''SELECT id, waste_type, quantity, detection_date 
+                   FROM waste_detection 
+                   WHERE user_id = ?'''
+        params = [user_id]
+        
+        if start_date:
+            query += ' AND DATE(detection_date) >= ?'
+            params.append(start_date)
+        
+        if end_date:
+            query += ' AND DATE(detection_date) <= ?'
+            params.append(end_date)
+        
+        if waste_type and waste_type != 'all':
+            query += ' AND waste_type = ?'
+            params.append(waste_type)
+        
+        query += ' ORDER BY detection_date DESC'
+        
+        c.execute(query, params)
+        detections = c.fetchall()
+        conn.close()
+        
+        si = StringIO()
+        writer = csv.writer(si)
+        writer.writerow(['ID', 'Type de déchet', 'Quantité', 'Date de détection'])
+        writer.writerows(detections)
+        
+        output = si.getvalue()
+        si.close()
+        
+        return Response(
+            output,
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=detections.csv'}
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/detections/export/pdf', methods=['GET'])
+@login_required
+def export_detections_pdf():
+    """Exporter les détections en PDF"""
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from io import BytesIO
+    except ImportError:
+        return jsonify({'success': False, 'message': 'reportlab non installé. Exécutez: pip install reportlab'}), 500
+    
+    user_id = session.get('user_id')
+    
+    # Get filters
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    waste_type = request.args.get('waste_type', 'all')
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        query = '''SELECT id, waste_type, quantity, detection_date 
+                   FROM waste_detection 
+                   WHERE user_id = ?'''
+        params = [user_id]
+        
+        if start_date:
+            query += ' AND DATE(detection_date) >= ?'
+            params.append(start_date)
+        
+        if end_date:
+            query += ' AND DATE(detection_date) <= ?'
+            params.append(end_date)
+        
+        if waste_type and waste_type != 'all':
+            query += ' AND waste_type = ?'
+            params.append(waste_type)
+        
+        query += ' ORDER BY detection_date DESC'
+        
+        c.execute(query, params)
+        detections = c.fetchall()
+        conn.close()
+        
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+        
+        # Styles
+        styles = getSampleStyleSheet()
+        title_style = styles['Heading1']
+        
+        # Title
+        title = Paragraph("Rapport de Détections - WasteAI", title_style)
+        elements.append(title)
+        elements.append(Spacer(1, 20))
+        
+        # Table data
+        data = [['ID', 'Type de déchet', 'Quantité', 'Date de détection']]
+        for detection in detections:
+            data.append([str(detection[0]), detection[1], str(detection[2]), detection[3]])
+        
+        # Create table
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(table)
+        doc.build(elements)
+        
+        buffer.seek(0)
+        
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name='detections.pdf'
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# ==================== ROUTE DE TEST ====================
+
+@app.route('/test-api')
+@login_required
+def test_api():
+    """Page de test des API"""
+    return render_template('test_api.html')
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

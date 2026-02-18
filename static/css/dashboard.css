@@ -131,6 +131,38 @@
     border-color: #4CAF50;
 }
 
+/* Welcome Banner */
+.welcome-banner {
+    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+    border-radius: 16px;
+    padding: 25px 30px;
+    margin-bottom: 30px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(76, 175, 80, 0.2);
+}
+
+.welcome-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.welcome-content i {
+    font-size: 40px;
+    opacity: 0.9;
+}
+
+.welcome-content h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.welcome-content p {
+    font-size: 15px;
+    opacity: 0.9;
+}
+
 canvas {
     max-height: 300px;
 }

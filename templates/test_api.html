@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test API Dashboard</title>
+</head>
+
+<body>
+    <h1>Test des API Dashboard</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        async function testAPIs() {
+            results.innerHTML = '<h2>Test en cours...</h2>';
+
+            try {
+                // Test 1: Profile
+                results.innerHTML += '<h3>1. Test /api/profile</h3>';
+                const profileResp = await fetch('/api/profile');
+                const profileData = await profileResp.json();
+                results.innerHTML += `<pre>${JSON.stringify(profileData, null, 2)}</pre>`;
+
+                // Test 2: Monthly distribution
+                results.innerHTML += '<h3>2. Test /api/stats/monthly-distribution</h3>';
+                const monthlyResp = await fetch('/api/stats/monthly-distribution');
+                const monthlyData = await monthlyResp.json();
+                results.innerHTML += `<pre>${JSON.stringify(monthlyData, null, 2)}</pre>`;
+
+                // Test 3: Last month
+                results.innerHTML += '<h3>3. Test /api/stats/last-month</h3>';
+                const lastMonthResp = await fetch('/api/stats/last-month');
+                const lastMonthData = await lastMonthResp.json();
+                results.innerHTML += `<pre>${JSON.stringify(lastMonthData, null, 2)}</pre>`;
+
+                // Test 4: Total
+                results.innerHTML += '<h3>4. Test /api/stats/total</h3>';
+                const totalResp = await fetch('/api/stats/total');
+                const totalData = await totalResp.json();
+                results.innerHTML += `<pre>${JSON.stringify(totalData, null, 2)}</pre>`;
+
+                results.innerHTML += '<h2 style="color: green;">✅ Tests terminés</h2>';
+            } catch (error) {
+                results.innerHTML += `<h2 style="color: red;">❌ Erreur: ${error.message}</h2>`;
+                console.error(error);
+            }
+        }
+
+        // Lancer les tests au chargement
+        testAPIs();
+    </script>
+</body>
+
+</html>

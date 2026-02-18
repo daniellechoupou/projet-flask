@@ -5,24 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WasteAI - Mon Profil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shared_layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon">🌿</div>
+                <div class="logo-icon"><i class="fas fa-leaf"></i></div>
                 <span>WasteAI</span>
             </div>
 
             <nav class="menu">
                 <h3>MENU</h3>
                 <ul>
-                    <li><a href="/dashboard"><i class="icon">📊</i> Dashboard</a></li>
-                    <li><a href="/camera"><i class="icon">📷</i> Camera</a></li>
-                    <li><a href="#"><i class="icon">📈</i> Detections</a></li>
+                    <li><a href="/dashboard"><i class="icon fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/camera"><i class="icon fas fa-camera"></i> Camera</a></li>
+                    <li><a href="/detections"><i class="icon fas fa-chart-bar"></i> Detections</a></li>
                 </ul>
             </nav>
 
@@ -30,10 +32,10 @@
                 <h3>GENERAL</h3>
                 <ul>
                     {% if session.get('role') == 'admin' %}
-                    <li><a href="/admin/users"><i class="icon">👥</i> Gestion Utilisateurs</a></li>
+                    <li><a href="/admin/users"><i class="icon fas fa-users"></i> Gestion Utilisateurs</a></li>
                     {% endif %}
-                    <li class="active"><a href="/profile"><i class="icon">👤</i> My profile</a></li>
-                    <li><a href="#" onclick="logout()"><i class="icon">🚪</i> Sign out</a></li>
+                    <li class="active"><a href="/profile"><i class="icon fas fa-user"></i> My profile</a></li>
+                    <li><a href="#" onclick="logout()"><i class="icon fas fa-sign-out-alt"></i> Sign out</a></li>
                 </ul>
             </nav>
         </aside>
@@ -41,10 +43,25 @@
         <main class="main-content">
             <header class="header">
                 <div class="header-left">
-                    <button class="menu-toggle">☰</button>
+                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
                     <h1>Mon Profil</h1>
                 </div>
                 <div class="header-right">
+                    <div class="notification-container">
+                        <button id="notificationBtn" class="notification-btn" onclick="toggleNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" class="notification-badge">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="notification-dropdown">
+                            <div class="notification-header">
+                                <h3>Notifications</h3>
+                                <button onclick="markAllAsRead()" class="btn-mark-all">Tout marquer comme lu</button>
+                            </div>
+                            <div id="notificationsList" class="notifications-list">
+                                <!-- Notifications will be inserted here by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
                     <span id="headerUsername" class="user-name"></span>
                     <a href="/profile" class="avatar-link">
                         <img id="headerAvatar" src="https://via.placeholder.com/40" alt="Profile" class="user-avatar">
@@ -58,20 +75,20 @@
                 <!-- Photo de profil -->
                 <section class="profile-section">
                     <div class="section-header">
-                        <h2>📷 Photo de profil</h2>
+                        <h2><i class="fas fa-camera"></i> Photo de profil</h2>
                     </div>
                     <div class="profile-picture-container">
                         <div class="current-picture">
                             <img id="profilePicture" src="https://via.placeholder.com/150" alt="Photo de profil">
                             <div class="picture-overlay" onclick="document.getElementById('pictureInput').click()">
-                                <span>📷 Changer</span>
+                                <span><i class="fas fa-camera"></i> Changer</span>
                             </div>
                         </div>
                         <div class="picture-actions">
                             <input type="file" id="pictureInput" accept="image/*" style="display: none;"
                                 onchange="previewAndUpload(this)">
                             <button class="btn btn-secondary" onclick="document.getElementById('pictureInput').click()">
-                                <span>📤</span> Choisir une photo
+                                <i class="fas fa-upload"></i> Choisir une photo
                             </button>
                             <p class="hint">Formats acceptés : JPG, PNG, GIF. Taille max : 5 Mo</p>
                         </div>
@@ -81,7 +98,7 @@
                 <!-- Informations personnelles -->
                 <section class="profile-section">
                     <div class="section-header">
-                        <h2>📝 Informations personnelles</h2>
+                        <h2><i class="fas fa-edit"></i> Informations personnelles</h2>
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
@@ -104,7 +121,7 @@
                     </div>
                     <div class="form-actions">
                         <button class="btn btn-primary" onclick="updateProfile()">
-                            <span>💾</span> Sauvegarder les modifications
+                            <i class="fas fa-save"></i> Sauvegarder les modifications
                         </button>
                     </div>
                 </section>
@@ -112,7 +129,7 @@
                 <!-- Sécurité -->
                 <section class="profile-section">
                     <div class="section-header">
-                        <h2>🔐 Sécurité</h2>
+                        <h2><i class="fas fa-lock"></i> Sécurité</h2>
                     </div>
                     <div class="password-form">
                         <div class="form-group">
@@ -121,15 +138,15 @@
                                 <input type="password" id="currentPassword"
                                     placeholder="Entrez votre mot de passe actuel">
                                 <button type="button" class="toggle-password"
-                                    onclick="togglePassword('currentPassword')">👁️</button>
+                                    onclick="togglePassword('currentPassword')"><i class="fas fa-eye"></i></button>
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="newPassword">Nouveau mot de passe</label>
                             <div class="password-input-container">
                                 <input type="password" id="newPassword" placeholder="Minimum 6 caractères">
-                                <button type="button" class="toggle-password"
-                                    onclick="togglePassword('newPassword')">👁️</button>
+                                <button type="button" class="toggle-password" onclick="togglePassword('newPassword')"><i
+                                        class="fas fa-eye"></i></button>
                             </div>
                         </div>
                         <div class="form-group">
@@ -138,12 +155,12 @@
                                 <input type="password" id="confirmPassword"
                                     placeholder="Répétez le nouveau mot de passe">
                                 <button type="button" class="toggle-password"
-                                    onclick="togglePassword('confirmPassword')">👁️</button>
+                                    onclick="togglePassword('confirmPassword')"><i class="fas fa-eye"></i></button>
                             </div>
                         </div>
                         <div class="form-actions">
                             <button class="btn btn-warning" onclick="changePassword()">
-                                <span>🔑</span> Modifier le mot de passe
+                                <i class="fas fa-key"></i> Modifier le mot de passe
                             </button>
                         </div>
                     </div>
@@ -155,6 +172,7 @@
     <!-- Toast notification -->
     <div id="toast" class="toast"></div>
 
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
 </body>
 

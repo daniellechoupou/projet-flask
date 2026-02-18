@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détections - WasteAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shared_layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detections.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-leaf"></i></div>
+                <span>WasteAI</span>
+            </div>
+
+            <nav class="menu">
+                <h3>MENU</h3>
+                <ul>
+                    <li><a href="/dashboard"><i class="icon fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/camera"><i class="icon fas fa-camera"></i> Camera</a></li>
+                    <li class="active"><a href="/detections"><i class="icon fas fa-chart-bar"></i> Detections</a></li>
+                </ul>
+            </nav>
+
+            <nav class="general-menu">
+                <h3>GENERAL</h3>
+                <ul>
+                    {% if session.get('role') == 'admin' %}
+                    <li><a href="/admin/users"><i class="icon fas fa-users"></i> Gestion Utilisateurs</a></li>
+                    {% endif %}
+                    <li><a href="/profile"><i class="icon fas fa-user"></i> Mon profil</a></li>
+                    <li><a href="#" onclick="logout()"><i class="icon fas fa-sign-out-alt"></i> Deconnexion</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+                    <h1>Détections</h1>
+                </div>
+                <div class="header-right">
+                    <div class="notification-container">
+                        <button id="notificationBtn" class="notification-btn" onclick="toggleNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" class="notification-badge">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="notification-dropdown">
+                            <div class="notification-header">
+                                <h3>Notifications</h3>
+                                <button onclick="markAllAsRead()" class="btn-mark-all">Tout marquer comme lu</button>
+                            </div>
+                            <div id="notificationsList" class="notifications-list">
+                                <!-- Notifications will be inserted here by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    <span id="headerUsername" class="user-email">{{ email }}</span>
+                    <a href="/profile" class="avatar-link">
+                        <img id="headerAvatar" src="https://via.placeholder.com/40" alt="Profile" class="user-avatar">
+                    </a>
+                </div>
+            </header>
+
+            <div class="content">
+                <p class="subtitle">Consultez et exportez l'historique de toutes vos détections de déchets.</p>
+
+                <section class="content-sheet">
+                    <!-- Filters Section -->
+                    <div class="filters-section">
+                        <h2><i class="fas fa-filter"></i> Filtres</h2>
+                        <div class="filters-grid">
+                            <div class="filter-item">
+                                <label for="startDate">Date de début</label>
+                                <input type="date" id="startDate" class="filter-input">
+                            </div>
+                            <div class="filter-item">
+                                <label for="endDate">Date de fin</label>
+                                <input type="date" id="endDate" class="filter-input">
+                            </div>
+                            <div class="filter-item">
+                                <label for="wasteType">Type de déchet</label>
+                                <select id="wasteType" class="filter-input">
+                                    <option value="all">Tous</option>
+                                    <option value="plastic">Plastique</option>
+                                    <option value="paper">Papier</option>
+                                    <option value="metal">Métal</option>
+                                    <option value="glass">Verre</option>
+                                    <option value="organic">Organique</option>
+                                </select>
+                            </div>
+                            <div class="filter-actions">
+                                <button onclick="applyFilters()" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Appliquer
+                                </button>
+                                <button onclick="resetFilters()" class="btn btn-secondary">
+                                    <i class="fas fa-redo"></i> Réinitialiser
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Buttons -->
+                    <div class="export-section">
+                        <h2><i class="fas fa-download"></i> Exporter</h2>
+                        <div class="export-buttons">
+                            <button onclick="exportCSV()" class="btn btn-success">
+                                <i class="fas fa-file-csv"></i> Exporter en CSV
+                            </button>
+                            <button onclick="exportPDF()" class="btn btn-danger">
+                                <i class="fas fa-file-pdf"></i> Exporter en PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Detections Table -->
+                    <div class="table-section">
+                        <h2><i class="fas fa-table"></i> Liste des détections</h2>
+                        <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> Chargement...
+                        </div>
+                        <div id="tableContainer">
+                            <table id="detectionsTable" class="detections-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Type de déchet</th>
+                                        <th>Quantité</th>
+                                        <th>Date de détection</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detectionsTableBody">
+                                    <!-- Data will be inserted here by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div id="paginationContainer" class="pagination-container">
+                            <!-- Pagination will be inserted here by JavaScript -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script>
+        // Load user profile picture
+        fetch('/api/profile')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.profile_picture) {
+                    document.getElementById('headerAvatar').src = data.profile_picture;
+                }
+                if (data.success && data.username) {
+                    document.getElementById('headerUsername').textContent = data.username;
+                } else if (data.success && data.email) {
+                    document.getElementById('headerUsername').textContent = data.email;
+                }
+            })
+            .catch(error => console.error('Error loading profile:', error));
+    </script>
+    <script src="{{ url_for('static', filename='js/detections.js') }}"></script>
+</body>
+
+</html>
